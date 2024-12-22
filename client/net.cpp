@@ -2,17 +2,28 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <iostream>
+#define UDP_PORT 8080
 
 using namespace std;
 
-#define UDP_PORT 8080
+// Local variables
+static int client;
 
 // Global variables
 char ip[15] = "127.0.0.1";
 unsigned short port;
+bool connected = false;
 
 // External variables
 extern bool exit_program;
+
+// Structures
+struct Request {
+    unsigned char type;
+    string param1;
+    string param2;
+    uint32_t file_content;
+};
 
 // Functions
 //      UDP
@@ -34,11 +45,11 @@ static bool verify_connection() {
 
     printf("Received: %hu\n", message);
     if (message == 1) return true;
-    else if (message == 0) return false;
+    return false;
 }
 
-// TCP
-static void connect_to_server(int &client) {
+//      TCP
+static void connect_to_server() {
     if (!verify_connection()) {
         printf("The server is full.\n");
         return;
@@ -59,15 +70,53 @@ static void connect_to_server(int &client) {
         printf("Connected.\n");
 }
 
-void disconnect_from_server(int &client) {
-
+//          Sending messages
+static void send_message(struct Request message) {
+    send(client, &message, sizeof(message), 0);
 }
 
-//  General
-void get_server_info(int &client) {
+void send_login(string user, string password) {
+    struct Request message;
+    message.type = 0; // Login type
+    message.param1 = user;
+    message.param2 = password;
+    send_message(message);
+}
+
+//          Closing
+void close_socket() {
+    connected = false;
+    shutdown(client, SHUT_RDWR);
+}
+
+void disconnect_from_server() {
+    if (!connected) {
+        printf("Not connected.\n");
+        return;
+    }
+
+    // Sending disconnection message
+    struct Request message;
+    message.type = 10;
+    send_message(message);
+
+    close_socket();
+}
+
+//      General
+void get_server_info() {
     printf("IP: ");
     cin >> ip;
     printf("Port: ");
     cin >> port;
-    connect_to_server(client);
+    connect_to_server();
+}
+
+void login() {
+    struct Request message;
+    string user, password;
+    cout << "User: ";
+    cin >> message.param1;
+    cout << "Password: ";
+    cin >> message.param2;
 }

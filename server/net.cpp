@@ -138,6 +138,9 @@ static void wait_tcp_requests(int client) {
                 break;
             case 9: // Change password
                 break;
+            case 10: // Disconnect
+                connected_clients--;
+                break;
         }
     }
 }
@@ -146,6 +149,11 @@ static void wait_tcp_clients() {
     int new_client;
     while (!exit_program && server_live) {
         new_client = accept(tcp_server, nullptr, nullptr);
+        connected_clients++;
+
+        // Create thread for wait requests
+        thread wait_messages(wait_tcp_clients);
+        wait_messages.detach();
     }
 }
 
