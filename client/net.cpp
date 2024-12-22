@@ -25,6 +25,20 @@ struct Request {
     uint32_t file_content;
 };
 
+struct Response {
+    /*
+        Types:
+            0: Loged in
+            1: Not loged.
+            2: User created.
+            3: User not created.
+            4: Uploaded.
+            5: Downloaded.
+    */
+    unsigned char type;
+    uint32_t file_content;
+};
+
 // Functions
 //      UDP
 static bool verify_connection() {
@@ -71,7 +85,7 @@ static void connect_to_server() {
 }
 
 //          Sending messages
-static void send_message(struct Request message) {
+static void send_message(struct Request &message) {
     send(client, &message, sizeof(message), 0);
 }
 
@@ -81,6 +95,12 @@ void send_login(string user, string password) {
     message.param1 = user;
     message.param2 = password;
     send_message(message);
+
+    struct Response response;
+    response.type = 20;
+    recv(client, &response, sizeof(response), MSG_WAITALL);
+    if (response.type == 0) cout << "Logged in." << endl;
+    else cout << "Not loged in: incorrect user or password." << endl;
 }
 
 //          Closing
@@ -119,4 +139,6 @@ void login() {
     cin >> message.param1;
     cout << "Password: ";
     cin >> message.param2;
+
+    send_login(user, password);
 }

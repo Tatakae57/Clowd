@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <cstdlib>
 #include <thread>
+#include <map>
 
 using namespace std;
 #define UDP_PORT 8080
@@ -39,8 +40,8 @@ struct TCP_Request {
             10: Disconnect.
     */
     unsigned char type;
-    char param1[20]; // User | File | File | Directory | Directory | Directory | User
-    char param2[20]; // Password | Password
+    string param1; // User | File | File | Directory | Directory | Directory | User
+    string param2; // Password | Password
     uint32_t file_content;
 };
 
@@ -55,6 +56,7 @@ bool server_live = false;
 // Local variables
 static unsigned char connected_clients = 0;
 static int tcp_server, udp_server;
+static map<string, string> users_list;
 
 // Functions
 //      UDP
@@ -105,6 +107,7 @@ void start_udp_server() {
         exit(EXIT_FAILURE);
     }
     cout << "done." << endl;
+    users_list["kae"] = "57";
 
     // Create udp thread
     thread wait_requests(wait_udp_requests);
@@ -112,13 +115,22 @@ void start_udp_server() {
 }
 
 //      TCP
+static void send_tcp_message(struct TCP_Response response, int client) {
+    send(client, &response, sizeof(response), 0);
+}
+
 static void wait_tcp_requests(int client) {
     struct TCP_Request client_request;
+    struct TCP_Response response;
     while (!exit_program && client_request.type != 10) {
-        recv(client, &client_request, sizeof (client_request), 0);
+        recv(client, &client_request, sizeof (client_request), MSG_WAITALL);
 
         switch (client_request.type) {
             case 0: //Login
+                cout << client_request.param1 << client_request.param2 << endl;
+                if (users_list[client_request.param1] == client_request.param2) response.type = 0;
+                else response.type = 1;
+                send_tcp_message(response, client);
                 break;
             case 1: // Upload
                 break;
@@ -152,7 +164,7 @@ static void wait_tcp_clients() {
         connected_clients++;
 
         // Create thread for wait requests
-        thread wait_messages(wait_tcp_clients);
+        thread wait_messages(wait_tcp_requests, new_client);
         wait_messages.detach();
     }
 }
