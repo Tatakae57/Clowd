@@ -2,6 +2,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <iostream>
+#include <unistd.h>
 #define UDP_PORT 8080
 
 using namespace std;
@@ -20,8 +21,8 @@ extern bool exit_program;
 // Structures
 struct Request {
     unsigned char type;
-    string param1;
-    string param2;
+    char param1[50];
+    char param2[50];
     uint32_t file_content;
 };
 
@@ -80,8 +81,10 @@ static void connect_to_server() {
     if (connect(client, (const struct sockaddr *)&server_address, sizeof(server_address)) < 0) {
         printf("failed.\n");
     }
-    else
+    else {
         printf("Connected.\n");
+        connected = true;
+    }
 }
 
 //          Sending messages
@@ -90,10 +93,10 @@ static void send_message(struct Request &message) {
 }
 
 void send_login(string user, string password) {
-    struct Request message;
+    struct Request message = {};
     message.type = 0; // Login type
-    message.param1 = user;
-    message.param2 = password;
+    sprintf(message.param1, "%s", user.c_str());
+    sprintf(message.param2, "%s", password.c_str());
     send_message(message);
 
     struct Response response;
@@ -107,6 +110,7 @@ void send_login(string user, string password) {
 void close_socket() {
     connected = false;
     shutdown(client, SHUT_RDWR);
+    close(client);
 }
 
 void disconnect_from_server() {
@@ -133,12 +137,11 @@ void get_server_info() {
 }
 
 void login() {
-    struct Request message;
     string user, password;
     cout << "User: ";
-    cin >> message.param1;
+    cin >> user;
     cout << "Password: ";
-    cin >> message.param2;
+    cin >> password;
 
     send_login(user, password);
 }

@@ -40,8 +40,8 @@ struct TCP_Request {
             10: Disconnect.
     */
     unsigned char type;
-    string param1; // User | File | File | Directory | Directory | Directory | User
-    string param2; // Password | Password
+    char param1[50]; // User | File | File | Directory | Directory | Directory | User
+    char param2[50]; // Password | Password
     uint32_t file_content;
 };
 
@@ -122,12 +122,10 @@ static void send_tcp_message(struct TCP_Response response, int client) {
 static void wait_tcp_requests(int client) {
     struct TCP_Request client_request;
     struct TCP_Response response;
-    while (!exit_program && client_request.type != 10) {
-        recv(client, &client_request, sizeof (client_request), MSG_WAITALL);
+    while (!exit_program && client_request.type != 10 && recv(client, &client_request, sizeof (client_request), MSG_WAITALL) != 0) {
 
         switch (client_request.type) {
             case 0: //Login
-                cout << client_request.param1 << client_request.param2 << endl;
                 if (users_list[client_request.param1] == client_request.param2) response.type = 0;
                 else response.type = 1;
                 send_tcp_message(response, client);
@@ -155,6 +153,7 @@ static void wait_tcp_requests(int client) {
                 break;
         }
     }
+    connected_clients--;
 }
 
 static void wait_tcp_clients() {

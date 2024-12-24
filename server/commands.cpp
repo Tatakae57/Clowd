@@ -8,7 +8,11 @@ extern string ip;
 extern unsigned short port, max_clients, max_users, max_space;
 
 void help() {
-
+    printf("Help:\n");
+    printf("    start_server: Start the server.");
+    printf("    stop_server: Stop server :v");
+    printf("    help: Show this message.");
+    printf("    exit_program: Exit program.");
 }
 
 void server_configuration() {

@@ -21,10 +21,11 @@ int main() {
         else if (input == "login") login();
         else if (input == "exit_program") {
             exit_program = true;
-            if (connected) {
-                disconnect_from_server();
-            }
-            close_socket();
+            if (connected) disconnect_from_server();
+        }
+        else if (input == "disconnect") {
+            if (connected) disconnect_from_server();
+            else cout << "Not connected." << endl;
         }
         else cout << "Unknown command: " << input << endl;
     }
